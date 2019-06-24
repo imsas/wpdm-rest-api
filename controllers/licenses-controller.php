@@ -140,8 +140,9 @@ class WPDM_REST_License_Controller {
 
     public function get_item( $request ) {
         global $wpdb;
-        $license_id      = $request['id'];
-        $license_query   = isset( $request['id'] ) ? "id = '".$license_id."'" : '';
+        $license_query   = isset( $request['id'] ) ? "id = '".$request['id']."'" : '';
+        $license_query   = isset( $request['oid'] ) ? "oid = '".$request['oid']."'" : '';
+        $license_query   = isset( $request['licenseno'] ) ? "licenseno = '".$request['licenseno']."'" : '';
 
         $sql = "SELECT *
                 FROM {$wpdb->prefix}ahm_licenses

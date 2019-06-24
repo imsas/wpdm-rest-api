@@ -98,11 +98,20 @@ function wpdm_rest_api_admin_user(){
     $rest_admin = get_option('wpdm_rest_admin');
 
     if( $rest_admin === false || $rest_admin <= 0 ){
-        $admin_email = get_option('admin_email');
+
+        /*$admin_email = get_option('admin_email');
         $admin = get_user_by('email', $admin_email );
         $rest_admin = $admin->ID;
         update_option('wpdm_rest_admin', $rest_admin );
-        return $rest_admin;
+        return $rest_admin;*/
+
+        $admin_users = get_users( array( 'role' => 'administrator' ,'number' => 1 ) );
+        foreach ( $admin_users as $admin_user ) {
+            $rest_admin = $admin_user->ID;
+            update_option('wpdm_rest_admin', $rest_admin );
+            return $rest_admin;
+        }
     }
+
     return $rest_admin;
 }
