@@ -62,10 +62,83 @@ class WPDM_REST_Packages_Controller {
         return true;
     }
 
+    public function uploadFile($fileinfo){
+
+        if(!current_user_can('upload_files')) die('-2');
+
+        $name = $fileinfo['name'];
+
+        $ext = explode('.', $name);
+        $ext = end($ext);
+        $ext = strtolower($ext);
+        if(in_array($ext, array('php', 'js', 'html', 'py', 'pl', 'htaccess'))) die('-3');
+
+        do_action("wpdm_restapi_before_upload_file", $fileinfo );
+
+        @set_time_limit(0);
+
+        if(file_exists(UPLOAD_DIR.$name) && get_option('__wpdm_overwrrite_file',0) == 1){
+            @unlink(UPLOAD_DIR.$name);
+        }
+
+        $filename = $name;
+
+        if(get_option('__wpdm_sanitize_filename', 0) == 1)
+            $filename = sanitize_file_name($filename);
+
+        move_uploaded_file($fileinfo['tmp_name'], UPLOAD_DIR . $filename);
+        do_action("wpdm_restapi_after_upload_file", UPLOAD_DIR . $filename);
+
+        return $filename;
+
+        //echo "|||".$filename."|||";
+        //exit;
+    }
+
+    // TODO: Thumbnails upload from client & remote URL
+
     public function create_item( $request ) {
         if ( ! empty( $request['id'] ) ) {
             return new WP_Error( 'rest_post_exists', __( 'Cannot create existing post.' ), array( 'status' => 400 ) );
         }
+
+        //https://developer.wordpress.org/reference/classes/wp_rest_request/get_file_params/
+        $files_params = $request->get_file_params();
+        //wpdmprecho($files_params);die();
+
+        // File upload to /download-manager-files dir
+        if( isset( $files_params['files'] ) ):
+            $files = $files_params['files'];
+            $prepare_files = array();
+
+            // Multiple files
+            if( is_array( $files['name'] ) ):
+                foreach ($files['name'] as $indx => $file ):
+                    $fileinfo = array();
+                    $fileinfo['name']       = $file;
+                    $fileinfo['type']       = $files['type'][$indx];
+                    $fileinfo['tmp_name']   = $files['tmp_name'][$indx];
+                    $fileinfo['error']      = $files['error'][$indx];
+                    $fileinfo['size']       = $files['size'][$indx];
+
+                    //wpdmprecho($fileinfo);
+                    $res = $this->uploadFile($fileinfo);
+                    array_push($prepare_files, $res );
+                endforeach;
+            endif;
+
+            // Single file
+            if( ! is_array( $files['name'] ) ):
+                $res = $this->uploadFile($files);
+                array_push($prepare_files, $res );
+            endif;
+
+            //wpdmprecho($prepare_files);
+
+            $request['files'] = $prepare_files;
+        endif;
+
+        //die();
 
         $wpdm_meta              = array();
         $package                = array();
@@ -135,7 +208,7 @@ class WPDM_REST_Packages_Controller {
         $request['meta_input']  = isset( $request['meta_input'] ) ? $request['meta_input'] : array();
         $package['meta_input']  = $request['meta_input'] + $wpdm_meta;
 
-        //https://developer.wordpress.org/reference/functions/wp_insert_post/
+        // https://developer.wordpress.org/reference/functions/wp_insert_post/
         $post_id = wp_insert_post( $package, true );
 
         if ( is_wp_error( $post_id ) ) {
@@ -147,6 +220,7 @@ class WPDM_REST_Packages_Controller {
             return $post_id;
         }
 
+        // Setting package thumbnail
         if( isset( $request['thumbnail'] ) ){
             require_once( ABSPATH . 'wp-admin/includes/image.php' );
             $mime_type = '';
