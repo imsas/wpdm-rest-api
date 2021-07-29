@@ -68,7 +68,7 @@ class WPDM_REST_Tags_Controller {
         }
 
         $args       = array();
-        $taxonomy   = 'post_tag';
+        $taxonomy   = 'wpdmtag';
 
         $term = $request['term'];
         if ( isset($request['slug']) ) {
@@ -116,7 +116,7 @@ class WPDM_REST_Tags_Controller {
     public function get_items( $request ) {
 
         $args = array(
-            'taxonomy'      => 'post_tag',
+            'taxonomy'      => 'wpdmtag',
             'orderby'       => isset( $request['orderby'] ) ? $request['orderby'] : 'name',
             'order'         => isset( $request['order'] ) ? $request['order'] : 'ASC',
             'hide_empty'    => isset( $request['hide_empty'] ) ? $request['hide_empty'] : false,
@@ -144,7 +144,7 @@ class WPDM_REST_Tags_Controller {
 
     public function get_item( $request ) {
         $term_id    = (int) $request['id'];
-        $tag_info   = get_term( $term_id, 'post_tag', 'ARRAY_A' );
+        $tag_info   = get_term( $term_id, 'wpdmtag', 'ARRAY_A' );
 
         if ( empty( $tag_info ) ) {
             return rest_ensure_response( array() );
@@ -179,7 +179,7 @@ class WPDM_REST_Tags_Controller {
             $args['description'] = $request['description'];
         }
 
-        $term_tax_array = wp_update_term( $id, 'post_tag', $args );
+        $term_tax_array = wp_update_term( $id, 'wpdmtag', $args );
 
         if ( is_wp_error( $term_tax_array ) ) {
 
@@ -211,7 +211,7 @@ class WPDM_REST_Tags_Controller {
 
         $term = $this->get_item( array('id' => $id ) );
 
-        $term_deleted = wp_delete_term( $id,'post_tag' );
+        $term_deleted = wp_delete_term( $id,'wpdmtag' );
 
         if ( is_wp_error( $term_deleted ) ) {
 

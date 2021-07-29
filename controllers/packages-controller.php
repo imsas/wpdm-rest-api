@@ -511,7 +511,7 @@ class WPDM_REST_Packages_Controller {
         $post_data['guid']              = $post->guid;
         $post_data['comment_count']     = $post->comment_count;
         $post_data['permalink']         = get_the_permalink( $post->ID );
-        $post_data['tags']              = wp_get_post_tags( $post->ID );
+        $post_data['tags']              = wp_get_post_terms( $post->ID, 'wpdmtag' );
         $post_data['categories']        = wp_get_post_terms( $post->ID, 'wpdmcategory' );
         $post_data['thumbnail']    = get_the_post_thumbnail_url($post);
 
