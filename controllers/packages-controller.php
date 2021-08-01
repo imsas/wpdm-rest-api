@@ -143,7 +143,7 @@ class WPDM_REST_Packages_Controller {
         $wpdm_meta              = array();
         $package                = array();
         $package['post_type']   = 'wpdmpro';
-
+        $package['tax_input'] = [];
         if ( isset($request['title']) )         $package['post_title']      = $request['title'];
         if ( isset($request['slug']) )          $package['post_name']       = $request['slug'];
         if ( isset($request['description']) )   $package['post_content']    = $request['description'];
@@ -151,8 +151,8 @@ class WPDM_REST_Packages_Controller {
         if ( isset($request['author']) )        $package['author']          = $request['author'];
         if ( isset($request['status']) )        $package['post_status']     = $request['status'];
         if ( isset($request['parent']) )        $package['post_parent']     = $request['parent'];
-        if ( isset($request['categories']) )    $package['tax_input']       = array('wpdmcategory' => $request['categories']);
-        if ( isset($request['tags']) )          $package['tags_input']      = $request['tags'];
+        if ( isset($request['categories']) )    $package['tax_input']['wpdmcategory'] = $request['categories'];
+        if ( isset($request['tags']) )          $package['tax_input']['wpdmtag']      = $request['tags'];
 
         if( isset( $request['additional_previews'] ) )      $wpdm_meta['__wpdm_additional_previews'] = $request['additional_previews'];
         if( isset( $request['version'] ) )                  $wpdm_meta['__wpdm_version'] = $request['version'];
@@ -275,19 +275,24 @@ class WPDM_REST_Packages_Controller {
 
         //	Send comma separated ids, not an array
         if( isset($request['author']) ) $args['author'] = $request['author'];
-        //	Send comma separated tag slugs, not an array
-        if( isset($request['tag']) ) $args['tag'] = $request['tag'];
 
         if( isset($request['search']) ) $args['s'] = $request['search'];
 
+        $args['tax_query'] = [];
         // Send array of category terms
         if( isset($request['categories']) ) {
-            $args['tax_query'] = array(
-                array(
+            $args['tax_query'][] = array(
                     'taxonomy' => 'wpdmcategory',
                     'field' => 'slug',
-                    'terms' => $request['categories']
-                )
+                    'terms' => explode(",", $request['categories'])
+            );
+        }
+
+        if( isset($request['tag']) ) {
+            $args['tax_query'][] = array(
+                    'taxonomy' => 'wpdmtag',
+                    'field' => 'slug',
+                    'terms' => explode(",", $request['tag'])
             );
         }
 
