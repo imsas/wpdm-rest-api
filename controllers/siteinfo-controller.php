@@ -9,7 +9,7 @@ class WPDM_REST_Siteinfo_Controller {
     protected $rest_base;
 
     public function __construct() {
-        // REST Route: http://localhost/wpdm/wp-json/wpdm/v1/categories
+        // REST Route: http://localhost/wpdm/wp-json/wpdm/v1/siteinfo
         $this->namespace    = '/wpdm/v1';
         $this->rest_base    = 'siteinfo';
     }
@@ -37,7 +37,7 @@ class WPDM_REST_Siteinfo_Controller {
     public function get_permissions_check( $request ) {
 
         if ( ! current_user_can( 'edit_posts' ) ) {
-            return new WP_Error( 'rest_forbidden', esc_html__( 'You cannot view categories.' ), array( 'status' => $this->authorization_status_code() ) );
+            return new WP_Error( 'rest_forbidden', esc_html__( 'You cannot view siteinfo.' ), array( 'status' => $this->authorization_status_code() ) );
         }
         return true;
     }
