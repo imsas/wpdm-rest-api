@@ -38,7 +38,7 @@ class WPDM_REST_Siteinfo_Controller {
 
     public function get_permissions_check( $request ) {
 
-        if ( ! current_user_can( 'edit_posts' ) ) {
+        if ( ! current_user_can( 'read' ) ) {
             return new WP_Error( 'rest_forbidden', esc_html__( 'You cannot view siteinfo.' ), array( 'status' => $this->authorization_status_code() ) );
         }
         return true;
