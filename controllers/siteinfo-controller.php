@@ -25,7 +25,7 @@ class WPDM_REST_Siteinfo_Controller {
             'schema' => null,
         ) );
 
-        register_rest_route( $this->namespace, '/' . $this->rest_base . '/(?P<overview>[\d\w]+)', array(
+        register_rest_route( $this->namespace, '/' . $this->rest_base . '/overview', array(
             array(
                 'methods'               => 'GET',
                 'callback'              => array( $this, 'overview' ),
@@ -44,9 +44,10 @@ class WPDM_REST_Siteinfo_Controller {
 		return rest_ensure_response($siteinfo);
 	}
 
-    function overview( $request )
+    function overview( )
     {
-        $overview = $request['overview'];
+        global $wpdb;
+
         if(!\WPDM\__\Session::get( 'daily_sales' )) {
             $daily_sales = wpdmpp_daily_sales('', '', date("Y-m-d", strtotime("-6 Days")), date("Y-m-d", strtotime("Tomorrow")));
             \WPDM\__\Session::set('daily_sales', $daily_sales);
@@ -98,11 +99,20 @@ class WPDM_REST_Siteinfo_Controller {
         $stats['totalusers'] = $users['total_users'];
         $stats['customers'] = wpdm_valueof($users, 'avail_roles/wpdmpp_customer');
 
-        global $wpdb;
+        $y = date("Y");
+        $m = date("m");
+        $d = date("d");
+        $yd = date("d", strtotime("yesterday"));
+        $stats['downloads'] = [
+            'total' => wpdm_total_downloads(),
+            'today' => (int)$wpdb->get_var("select count(id) from {$wpdb->prefix}ahm_download_stats where `year`='{$y}' and `month` = '{$m}' and `day` = '{$d}'"),
+            'yesterday' => (int)$wpdb->get_var("select count(id) from {$wpdb->prefix}ahm_download_stats where `year`='{$y}' and `month` = '{$m}' and `day` = '{$yd}'")
+        ];
+
         $today = date("Y-m-d");
-        $stats['signuptoday'] = $wpdb->get_var("select count(ID) from {$wpdb->prefix}users where user_registered like '%{$today}%'");
+        $stats['signuptoday'] = (int)$wpdb->get_var("select count(ID) from {$wpdb->prefix}users where user_registered like '%{$today}%'");
         $yesterday = date("Y-m-d", strtotime("Yesterday"));
-        $stats['signupyesterday'] = $wpdb->get_var("select count(ID) from {$wpdb->prefix}users where user_registered like '%{$yesterday}%'");
+        $stats['signupyesterday'] = (int)$wpdb->get_var("select count(ID) from {$wpdb->prefix}users where user_registered like '%{$yesterday}%'");
 
         return rest_ensure_response($stats);
     }
