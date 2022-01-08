@@ -89,8 +89,7 @@ class WPDM_REST_Siteinfo_Controller {
         $sales['today'] = wpdmpp_currency_sign().number_format($c1,2);
         $c2 = $daily_sales['sales'][date("Y-m-d", strtotime("Yesterday"))];
         $sales['yesterday'] = wpdmpp_currency_sign().number_format($c2,2);
-        $sales_day_move = number_format(($c2 - $c1) / 100, 0);
-        $sales['daymove'] = $sales_day_move;
+        $sales['daymove'] = $this->trend($c2, $c1);
         $sales['thisweek'] = wpdmpp_currency_sign().wpdmpp_total_sales('', '', $ldolw, date("Y-m-d", strtotime("Tomorrow")));
         $sales['lastweek'] = wpdmpp_currency_sign().wpdmpp_total_sales('', '', $fdolw, $ldolw);
         $sales['thismonth'] = wpdmpp_currency_sign().wpdmpp_total_sales('', '', date("Y-m-01"), date("Y-m-d", strtotime("Tomorrow")));
@@ -108,19 +107,27 @@ class WPDM_REST_Siteinfo_Controller {
         $d = date("d");
         $yd = date("d", strtotime("yesterday"));
         $stats['downloads'] = [
-            'total' => wpdm_total_downloads(),
+            'total' => number_format(wpdm_total_downloads(), 0, '.', ','),
             'today' => (int)$wpdb->get_var("select count(id) from {$wpdb->prefix}ahm_download_stats where `year`='{$y}' and `month` = '{$m}' and `day` = '{$d}'"),
             'yesterday' => (int)$wpdb->get_var("select count(id) from {$wpdb->prefix}ahm_download_stats where `year`='{$y}' and `month` = '{$m}' and `day` = '{$yd}'")
         ];
-        $stats['downloads']['daymove'] = (int)(($stats['downloads']['today'] - $stats['downloads']['yesterday']) / 100);
+        $stats['downloads']['daymove'] = $this->trend($stats['downloads']['yesterday'], $stats['downloads']['today']);
 
         $today = date("Y-m-d");
         $stats['signuptoday'] = (int)$wpdb->get_var("select count(ID) from {$wpdb->prefix}users where user_registered like '%{$today}%'");
         $yesterday = date("Y-m-d", strtotime("Yesterday"));
         $stats['signupyesterday'] = (int)$wpdb->get_var("select count(ID) from {$wpdb->prefix}users where user_registered like '%{$yesterday}%'");
-        $stats['signupmove'] = (int)(($stats['signuptoday'] - $stats['signupyesterday']) / 100);
+        $stats['signupmove'] = $this->trend($stats['signupyesterday'] , $stats['signuptoday']);
 
         return rest_ensure_response($stats);
+    }
+
+    function trend($prev, $curr)
+    {
+        if($prev === 0 && $curr === 0) return 0;
+        if($prev === 0) return 100;
+        $trend = (int) (100 / ( $prev / ( $curr - $prev ) ));
+        return $trend;
     }
 
     public function get_permissions_check( $request ) {
