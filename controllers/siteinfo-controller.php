@@ -85,8 +85,12 @@ class WPDM_REST_Siteinfo_Controller {
          if($day_count++ > 6) break;
         }
         $sales['daily7'] = $daily_sales_dataset;
-        $sales['today'] = wpdmpp_currency_sign().number_format($daily_sales['sales'][date("Y-m-d")],2);
-        $sales['yesterday'] = wpdmpp_currency_sign().number_format($daily_sales['sales'][date("Y-m-d", strtotime("Yesterday"))],2);
+        $c1 = $daily_sales['sales'][date("Y-m-d")];
+        $sales['today'] = wpdmpp_currency_sign().number_format($c1,2);
+        $c2 = $daily_sales['sales'][date("Y-m-d", strtotime("Yesterday"))];
+        $sales['yesterday'] = wpdmpp_currency_sign().number_format($c2,2);
+        $sales_day_move = number_format(($c2 - $c1) / 100, 0);
+        $sales['daymove'] = $sales_day_move;
         $sales['thisweek'] = wpdmpp_currency_sign().wpdmpp_total_sales('', '', $ldolw, date("Y-m-d", strtotime("Tomorrow")));
         $sales['lastweek'] = wpdmpp_currency_sign().wpdmpp_total_sales('', '', $fdolw, $ldolw);
         $sales['thismonth'] = wpdmpp_currency_sign().wpdmpp_total_sales('', '', date("Y-m-01"), date("Y-m-d", strtotime("Tomorrow")));
@@ -108,11 +112,13 @@ class WPDM_REST_Siteinfo_Controller {
             'today' => (int)$wpdb->get_var("select count(id) from {$wpdb->prefix}ahm_download_stats where `year`='{$y}' and `month` = '{$m}' and `day` = '{$d}'"),
             'yesterday' => (int)$wpdb->get_var("select count(id) from {$wpdb->prefix}ahm_download_stats where `year`='{$y}' and `month` = '{$m}' and `day` = '{$yd}'")
         ];
+        $stats['downloads']['daymove'] = (int)(($stats['downloads']['today'] - $stats['downloads']['yesterday']) / 100);
 
         $today = date("Y-m-d");
         $stats['signuptoday'] = (int)$wpdb->get_var("select count(ID) from {$wpdb->prefix}users where user_registered like '%{$today}%'");
         $yesterday = date("Y-m-d", strtotime("Yesterday"));
         $stats['signupyesterday'] = (int)$wpdb->get_var("select count(ID) from {$wpdb->prefix}users where user_registered like '%{$yesterday}%'");
+        $stats['signupmove'] = (int)(($stats['signuptoday'] - $stats['signupyesterday']) / 100);
 
         return rest_ensure_response($stats);
     }
