@@ -25,6 +25,15 @@ class WPDM_REST_Siteinfo_Controller {
             'schema' => null,
         ) );
 
+        register_rest_route( $this->namespace, '/' . $this->rest_base . '/(?P<overview>[\d\w]+)', array(
+            array(
+                'methods'               => 'GET',
+                'callback'              => array( $this, 'overview' ),
+                'permission_callback'   => array( $this, 'admin_permissions_check' ),
+            ),
+            'schema' => null,
+        ) );
+
     }
 
 	function siteinfo()
@@ -35,10 +44,80 @@ class WPDM_REST_Siteinfo_Controller {
 		return rest_ensure_response($siteinfo);
 	}
 
+    function overview( $request )
+    {
+        $overview = $request['overview'];
+        if(!\WPDM\__\Session::get( 'daily_sales' )) {
+            $daily_sales = wpdmpp_daily_sales('', '', date("Y-m-d", strtotime("-6 Days")), date("Y-m-d", strtotime("Tomorrow")));
+            \WPDM\__\Session::set('daily_sales', $daily_sales);
+
+        } else
+            $daily_sales = \WPDM\__\Session::get( 'daily_sales' );
+
+
+        $date = new DateTime();
+        $date->modify('this week -6 days');
+        $fdolw =  $date->format('Y-m-d');
+
+        $date = new DateTime();
+        $date->modify('this week');
+        $ldolw =  $date->format('Y-m-d');
+
+        $date = new DateTime();
+        $date->modify('first day of last month');
+        $fdolm = $date->format('Y-m-d');
+
+        $date = new DateTime();
+        $date->modify('first day of this month');
+        $ldolm = $date->format('Y-m-d');
+
+        $dn = 0;
+
+        $last_year = date("Y")-1;
+
+        $this_Week = wpdmpp_total_sales('', '', $ldolw, date("Y-m-d", strtotime("Tomorrow")));
+
+        $daily_sales_dataset = [['Date', '$', '#']];
+        $day_count = 0;
+        foreach ($daily_sales['sales'] as $date => $sale) {
+         $daily_sales_dataset[] = [date("D", strtotime($date)), $sale, $daily_sales['quantities'][$date]];
+         if($day_count++ > 6) break;
+        }
+        $sales['daily7'] = $daily_sales_dataset;
+        $sales['today'] = wpdmpp_currency_sign().number_format($daily_sales['sales'][date("Y-m-d")],2);
+        $sales['yesterday'] = wpdmpp_currency_sign().number_format($daily_sales['sales'][date("Y-m-d", strtotime("Yesterday"))],2);
+        $sales['thisweek'] = wpdmpp_currency_sign().wpdmpp_total_sales('', '', $ldolw, date("Y-m-d", strtotime("Tomorrow")));
+        $sales['lastweek'] = wpdmpp_currency_sign().wpdmpp_total_sales('', '', $fdolw, $ldolw);
+        $sales['thismonth'] = wpdmpp_currency_sign().wpdmpp_total_sales('', '', date("Y-m-01"), date("Y-m-d", strtotime("Tomorrow")));
+        $sales['lastmonth'] = wpdmpp_currency_sign().wpdmpp_total_sales('', '', $fdolm, $ldolm);
+        $sales['thisyear'] = wpdmpp_currency_sign().number_format(wpdmpp_total_sales('', '', date("Y-01-01"), date("Y-m-d", strtotime("Tomorrow"))),2,'.',',');
+        $sales['lastyear'] = wpdmpp_currency_sign().number_format(wpdmpp_total_sales('', '', "$last_year-01-01", date("Y-01-01")),2,'.',',');
+        $sales['total'] = wpdmpp_currency_sign().number_format(wpdmpp_total_sales('', '', "1990-01-01", date("Y-m-d", strtotime('Tomorrow'))),2,'.',',');
+        $stats['sales'] = $sales;
+        $users = count_users();
+        $stats['totalusers'] = $users['total_users'];
+        $stats['customers'] = wpdm_valueof($users, 'avail_roles/wpdmpp_customer');
+
+        global $wpdb;
+        $today = date("Y-m-d");
+        $stats['signuptoday'] = $wpdb->get_var("select count(ID) from {$wpdb->prefix}users where user_registered like '%{$today}%'");
+        $yesterday = date("Y-m-d", strtotime("Yesterday"));
+        $stats['signupyesterday'] = $wpdb->get_var("select count(ID) from {$wpdb->prefix}users where user_registered like '%{$yesterday}%'");
+
+        return rest_ensure_response($stats);
+    }
 
     public function get_permissions_check( $request ) {
 
         if ( ! current_user_can( 'read' ) ) {
+            return new WP_Error( 'rest_forbidden', esc_html__( 'You cannot view siteinfo.' ), array( 'status' => $this->authorization_status_code() ) );
+        }
+        return true;
+    }
+
+    public function admin_permissions_check( $request ) {
+
+        if ( ! current_user_can( 'manage_options' ) ) {
             return new WP_Error( 'rest_forbidden', esc_html__( 'You cannot view siteinfo.' ), array( 'status' => $this->authorization_status_code() ) );
         }
         return true;
