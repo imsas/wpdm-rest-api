@@ -89,8 +89,10 @@ class WPDM_REST_Customers_Controller {
             $ID = $customer->uid;
             $customer = get_user_by('id', $ID);
             if(is_object($customer)) {
+                $customer = $customer->data;
                 $customer->value = wpdmpp_price_format(\WPDMPP\Libs\User::totalSpent($ID));
                 $customer->date = wp_date(get_option('date_format')." ".get_option('time_format'), strtotime($customer->user_registered ));
+                $customer->thumbnail = get_avatar_url($customer->ID);
             }
         }
 
