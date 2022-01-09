@@ -114,6 +114,7 @@ class WPDM_REST_API {
             'WPDM_REST_Orders_Controller',
             'WPDM_REST_Coupons_Controller',
             'WPDM_REST_License_Controller',
+            'WPDM_REST_Customers_Controller',
             'WPDM_REST_Siteinfo_Controller',
         );
 
@@ -132,6 +133,7 @@ class WPDM_REST_API {
         include_once dirname(__FILE__ ) . '/controllers/tags-controller.php';
         include_once dirname(__FILE__ ) . '/controllers/coupons-controller.php';
         include_once dirname(__FILE__ ) . '/controllers/licenses-controller.php';
+        include_once dirname(__FILE__ ) . '/controllers/customers-controller.php';
         include_once dirname(__FILE__ ) . '/controllers/siteinfo-controller.php';
     }
 }
