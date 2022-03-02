@@ -97,7 +97,7 @@ class WPDM_REST_API {
 
     // Disable Gutenberg for WPDM post type
     public function wpdm_disable_gutenberg($is_enabled, $post_type) {
-        if ($post_type === 'wpdmpro') return false;
+        if ($post_type === 'wpdmpro') return (bool)((int)get_option('__wpdm_gutenberg_editor', 0));
         return $is_enabled;
     }
 
