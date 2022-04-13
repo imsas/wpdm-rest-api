@@ -63,14 +63,14 @@ class WPDM_REST_Categories_Controller {
     }
 
     public function create_item( $request ) {
-        if ( empty( $request['term'] ) ) {
+	    //wpdmdd($request->get_body());
+        if ( empty( $request['name'] ) ) {
             return new WP_Error( 'rest_empty_category_term', __( 'Must provide term name.' ), array( 'status' => 400 ) );
         }
 
         $args       = array();
         $taxonomy   = 'wpdmcategory';
-
-        $term = $request['term'];
+        $term = $request['name'];
         if ( isset($request['slug']) ) {
             $args['slug'] = $request['slug'];
         }
