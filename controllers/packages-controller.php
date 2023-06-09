@@ -52,6 +52,25 @@ class WPDM_REST_Packages_Controller {
             ),
             'schema' => null,
         ) );
+
+	    register_rest_route( $this->namespace, '/' . $this->rest_base . '/(?P<id>[\d]+)/(?P<meta>[\w]+)', array(
+		    array(
+			    'methods'               => 'GET',
+			    'callback'              => array( $this, 'get_meta' ),
+			    'permission_callback'   => array( $this, 'get_item_permissions_check' ),
+		    ),
+		    array(
+			    'methods'               => 'PUT',
+			    'callback'              => array( $this, 'update_meta' ),
+			    'permission_callback'   => array( $this, 'update_item_permissions_check' ),
+		    ),
+		    array(
+			    'methods'               => 'DELETE',
+			    'callback'              => array( $this, 'delete_meta' ),
+			    'permission_callback'   => array( $this, 'delete_item_permissions_check' ),
+		    ),
+		    'schema' => null,
+	    ) );
     }
 
     public function create_item_permissions_check( $request ) {
@@ -148,7 +167,8 @@ class WPDM_REST_Packages_Controller {
         if ( isset($request['slug']) )          $package['post_name']       = $request['slug'];
         if ( isset($request['description']) )   $package['post_content']    = $request['description'];
         if ( isset($request['excerpt']) )       $package['post_excerpt']    = $request['excerpt'];
-        if ( isset($request['author']) )        $package['author']          = $request['author'];
+        if ( isset($request['author']) )        $package['post_author']     = $request['author'];
+        if ( isset($request['post_author']) )   $package['post_author']     = $request['post_author'];
         if ( isset($request['status']) )        $package['post_status']     = $request['status'];
         if ( isset($request['parent']) )        $package['post_parent']     = $request['parent'];
         if ( isset($request['categories']) )    $package['tax_input']['wpdmcategory'] = $request['categories'];
@@ -476,6 +496,55 @@ class WPDM_REST_Packages_Controller {
 
         return rest_ensure_response( $post );
     }
+
+	public function get_meta( $request ) {
+
+		$id = (int) $request['id'];
+		$meta = sanitize_key($request['meta']);
+		$meta_value = get_post_meta( $id, $meta, true );
+		$meta_value = maybe_unserialize($meta_value);
+
+
+		if ( empty( $id ) || empty($meta)) {
+			return new WP_Error("wpdm_rest_invalid_request", __( 'Invalid api request.', 'download-manager' ), array( 'status' => 404 ) );
+		}
+
+		$response = $this->prepare_item_for_response( $meta_value, $request );
+
+		return $response;
+	}
+
+	public function update_meta( $request ) {
+
+		$id = (int) $request['id'];
+		$meta = sanitize_key($request['meta']);
+		$meta_value = get_post_meta( $id, $meta, true );
+		$meta_value = maybe_unserialize($meta_value);
+		$response = update_post_meta( $id, $meta, $request['value'] );
+
+		if ( empty( $id ) || empty($meta)) {
+			return new WP_Error("wpdm_rest_invalid_request", __( 'Invalid api request.', 'download-manager' ), array( 'status' => 404 ) );
+		}
+
+		$response = $this->prepare_item_for_response( $response, $request );
+
+		return $response;
+	}
+
+	public function delete_meta( $request ) {
+
+		$id = (int) $request['id'];
+		$meta = sanitize_key($request['meta']);
+		$response = delete_post_meta( $id, $meta );
+
+		if ( empty( $id ) || empty($meta)) {
+			return new WP_Error("wpdm_rest_invalid_request", __( 'Invalid api request.', 'download-manager' ), array( 'status' => 404 ) );
+		}
+
+		$response = $this->prepare_item_for_response( $response, $request );
+
+		return $response;
+	}
 
     public function package_meta_data( $ID ) {
         $post_meta = get_post_custom( $ID );
