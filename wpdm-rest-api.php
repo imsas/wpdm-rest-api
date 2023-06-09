@@ -6,6 +6,7 @@ Description: WordPress Download Manager REST API
 Author: Shahriar
 Version: 1.3.3
 Author URI: https://wpdownloadmanager.com/
+Update URI: wpdm-rest-api
 */
 if (!defined('WPINC')) {
     exit();
@@ -18,6 +19,7 @@ class WPDM_REST_API {
         add_filter( 'register_post_type_args', array( $this, 'wpdm_post_type_args' ), 10, 2 );
         add_filter( 'use_block_editor_for_post_type', array( $this, 'wpdm_disable_gutenberg' ), 10, 2);
         add_action( 'rest_api_init', array( $this, 'wpdm_init_rest_api' ) );
+	    add_filter( 'update_plugins_wpdm-rest-api', [ $this, "updatePlugin" ], 10, 4 );
 
         if (defined('DOING_AJAX')) {
             add_action('wp_ajax_wpdm_change_api_key', array($this, 'generateToken'));
@@ -136,6 +138,22 @@ class WPDM_REST_API {
         include_once dirname(__FILE__ ) . '/controllers/customers-controller.php';
         include_once dirname(__FILE__ ) . '/controllers/siteinfo-controller.php';
     }
+
+	function updatePlugin( $update, $plugin_data, $plugin_file, $locales ) {
+		$id                = basename( __DIR__ );
+		$latest_versions   = WPDM()->updater->getLatestVersions();
+		$latest_version    = wpdm_valueof( $latest_versions, $id );
+		$access_token      = wpdm_access_token();
+		$update            = [];
+		$update['id']      = $id;
+		$update['slug']    = $id;
+		$update['url']     = $plugin_data['PluginURI'];
+		$update['tested']  = true;
+		$update['version'] = $latest_version;
+		$update['package'] = $access_token !== '' ? "https://www.wpdownloadmanager.com/?wpdmpp_file={$id}.zip&access_token={$access_token}" : '';
+
+		return $update;
+	}
 }
 
 $WPDM_REST_API = new WPDM_REST_API();
