@@ -316,6 +316,12 @@ class WPDM_REST_Packages_Controller {
             );
         }
 
+		if(isset($request['fav']) && (int)$request['fav'] === 1) {
+			$user = get_user_by('email', sanitize_email($request['user']));
+			$myfavs             = maybe_unserialize( get_user_meta( $user->ID, '__wpdm_favs', true ) );
+			$args['post__in'] = $myfavs;
+		}
+
         $the_query = new WP_Query( $args );
         $data = array();
         if ( $the_query->have_posts() ) {
@@ -568,30 +574,46 @@ class WPDM_REST_Packages_Controller {
     }
 
     public function prepare_item_for_response( $post, $request ) {
+
         $post_data = array();
+		if(!isset($request['fields'])) {
+			$post_data['id']                = (int) $post->ID;
+			$post_data['title']             = $post->post_title;
+			$post_data['slug']              = $post->post_name;
+			$post_data['description']       = $post->post_content;
+			$post_data['excerpt']           = $post->post_excerpt;
+			$post_data['author']            = (int) $post->post_author;
+			$post_data['date_created']      = $post->post_date;
+			$post_data['date_created_gmt']  = $post->post_date_gmt;
+			$post_data['date_modified']     = $post->post_modified;
+			$post_data['date_modified_gmt'] = $post->post_modified_gmt;
+			$post_data['status']            = $post->post_status;
+			$post_data['parent']            = $post->post_parent;
+			$post_data['guid']              = $post->guid;
+			$post_data['comment_count']     = $post->comment_count;
+			$post_data['permalink']         = get_the_permalink( $post->ID );
+			$post_data['tags']              = wp_get_post_terms( $post->ID, 'wpdmtag' );
+			$post_data['categories']        = wp_get_post_terms( $post->ID, 'wpdmcategory' );
+			$post_data['thumbnail']         = get_the_post_thumbnail_url( $post );
 
-        $post_data['id']                = (int) $post->ID;
-        $post_data['title']             = $post->post_title;
-        $post_data['slug']              = $post->post_name;
-        $post_data['description']       = $post->post_content;
-        $post_data['excerpt']           = $post->post_excerpt;
-        $post_data['author']            = (int) $post->post_author;
-        $post_data['date_created']      = $post->post_date;
-        $post_data['date_created_gmt']  = $post->post_date_gmt;
-        $post_data['date_modified']     = $post->post_modified;
-        $post_data['date_modified_gmt'] = $post->post_modified_gmt;
-        $post_data['status']            = $post->post_status;
-        $post_data['parent']            = $post->post_parent;
-        $post_data['guid']              = $post->guid;
-        $post_data['comment_count']     = $post->comment_count;
-        $post_data['permalink']         = get_the_permalink( $post->ID );
-        $post_data['tags']              = wp_get_post_terms( $post->ID, 'wpdmtag' );
-        $post_data['categories']        = wp_get_post_terms( $post->ID, 'wpdmcategory' );
-        $post_data['thumbnail']    = get_the_post_thumbnail_url($post);
+			$wpdm_meta = $this->package_meta_data( $post->ID );
 
-        $wpdm_meta = $this->package_meta_data( $post->ID );
+			$post_data = $post_data + $wpdm_meta;
+		} else {
+			$fields = explode(",", $request['fields']);
+			foreach ( $fields as $field ) {
+				if(isset($post->$field))
+					$post_data[$field] =  $post->$field;
+				else {
+					if($field === 'thumbnail')
+						$post_data[$field] = get_the_post_thumbnail_url( $post );
+					$wpdm_meta = $this->package_meta_data( $post->ID );
+					if (isset($wpdm_meta[$field]))
+						$post_data[$field] = $wpdm_meta[$field];
 
-        $post_data = $post_data + $wpdm_meta;
+				}
+			}
+		}
 
         //return rest_ensure_response( array_merge( $post_data, $this->package_meta_data( $post->ID ) ) );
 

@@ -38,6 +38,7 @@ class WPDM_REST_Siteinfo_Controller {
 
 	function siteinfo()
 	{
+		header("Access-Control-Allow-Origin: *");
 		$icon = get_site_icon_url();
 		$icon = $icon ?: WPDM_BASE_URL . 'assets/images/wpdm-logo.png';
 		$siteinfo = [ 'name' => get_bloginfo('name'), 'desc' => get_bloginfo('description'),  'version' => get_bloginfo('version'), 'url' => get_bloginfo('url'), 'icon' => $icon];

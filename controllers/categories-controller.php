@@ -123,12 +123,13 @@ class WPDM_REST_Categories_Controller {
             'orderby'       => isset( $request['orderby'] ) ? $request['orderby'] : 'name',
             'order'         => isset( $request['order'] ) ? $request['order'] : 'ASC',
             'hide_empty'    => isset( $request['hide_empty'] ) ? $request['hide_empty'] : false,
-            'number'        => isset( $request['number'] ) ? $request['number'] : 0,
-            'offset'        => isset( $request['offset'] ) ? $request['offset'] : 0,
-            'parent'        => isset( $request['parent'] ) ? $request['parent'] : 0,
             'include'       => isset( $request['include'] ) ? $request['include'] : array(),
             'exclude'       => isset( $request['exclude'] ) ? $request['exclude'] : array(),
         );
+
+		if(isset( $request['number'] )) $args['number'] = $request['number'];
+		if(isset( $request['parent'] )) $args['parent'] = $request['parent'];
+		if(isset( $request['offset'] )) $args['offset'] = $request['offset'];
 
         $terms       = array();
         $the_query  = new WP_Term_Query($args);

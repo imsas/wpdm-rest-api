@@ -6,7 +6,7 @@ if (!defined('WPINC')) {
 function wpdm_rest_api_basic_auth_handler( $user ) {
     global $wpdm_rest_basic_auth_error;
 
-    $wpdm_rest_basic_auth_error = null;
+	$wpdm_rest_basic_auth_error = null;
 
     // Don't authenticate twice
     if ( ! empty( $user ) ) {
@@ -15,7 +15,7 @@ function wpdm_rest_api_basic_auth_handler( $user ) {
 
     // Bearer Token Auth
     $api_key        = get_option('_wpdm_api_key');
-    $bearer_token   = wpdm_rest_api_get_bearer_token();
+	$bearer_token   = wpdm_rest_api_get_bearer_token();
     if( $api_key == $bearer_token && $bearer_token !== null ) {
         $user = wpdm_rest_api_admin_user();
         return $user;
@@ -91,6 +91,9 @@ function wpdm_rest_api_get_bearer_token() {
             return $matches[1];
         }
     }
+	if(wpdm_query_var('auth_token', 'txt') !== '') {
+		return wpdm_query_var('auth_token', 'txt');
+	}
     return null;
 }
 

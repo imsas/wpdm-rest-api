@@ -19,6 +19,16 @@ class WPDM_REST_Orders_Controller {
 
     // Register our routes.
     public function register_routes() {
+
+	    register_rest_route( $this->namespace, '/' . $this->rest_base . '/daily_total', array(
+		    array(
+			    'methods'               => 'GET',
+			    'callback'              => array( $this, 'daily_total' ),
+			    'permission_callback'   => array( $this, 'get_items_permissions_check' ),
+		    ),
+		    'schema' => null,
+	    ) );
+
         register_rest_route( $this->namespace, '/' . $this->rest_base, array(
             array(
                 'methods'               => 'GET',
@@ -235,6 +245,20 @@ class WPDM_REST_Orders_Controller {
 
         return rest_ensure_response( $response );
     }
+
+	function daily_total() {
+		$date = wpdm_query_var('date');
+		$date_from = wpdm_query_var('date_from');
+		$date_to = wpdm_query_var('date_to');
+		if($date) {
+			$date_from = $date_to = $date;
+		}
+		if(!$date_from || !$date_to) {
+			$date_from = $date_to = date("Y-m-d");
+		}
+		$result = wpdmpp_daily_sales('', '', $date_from, $date_to);
+		return $result;
+	}
 
     public function prepare_item_for_response( $order_info, $request ) {
 

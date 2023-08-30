@@ -113,20 +113,51 @@ class WPDM_REST_Subscribers_Controller {
 
         $package_query  = isset( $request['package_id'] ) ? "and e.pid = ".(int) $request['package_id'] : '';
 
-        $sql = "SELECT p.post_title, e.*
+		$source = isset($request['source']) ? sanitize_text_field($request['source']) : 'emaillock';
+
+		if($source === 'newsletter') {
+			$sql = "SELECT *
+                FROM {$wpdb->prefix}eden_subscriber                 
+                ORDER BY `id` DESC
+                LIMIT $start, $items_per_page";
+			$res = $wpdb->get_results( $sql, ARRAY_A );
+		} else if($source === 'membership') {
+			$plans = WPPM()->plan_manager->getPlans();
+			foreach ($plans as &$plan) {
+				$plan = $plan->role_id;
+			}
+			//wp_send_json($plans);
+			$res = get_users(['role__in' => $plans]);
+			foreach ($res as &$r) {
+				$r = $r->data;
+				$subscription_table = $wpdb->prefix . 'wppm_subscriptions';
+				$subscriptions = $wpdb->get_results("SELECT * FROM $subscription_table WHERE `user_id` = {$r->ID} ORDER BY `modified_at` DESC ");
+				$subs = [];
+				foreach ($subscriptions as $subscription) {
+					$subs[] = ['plan_name' => get_the_title($subscription->plan_id), 'plan_id' => $subscription->plan_id, 'subscription_status' => $subscription->subscription_status, 'created_at' => $subscription->created_at, 'expires_at' => $subscription->expires_at, 'payment_system' => $subscription->payment_system_id];
+				}
+				$download_limit = WPPM()->user_manager->downloadLimit($r->ID);
+				$user_download_count = WPPM()->user_manager->downloadCount($r->ID);
+				$r = ['email' => $r->user_email, 'name' => $r->display_name, 'subscriptions' => $subs, 'download_limit' => $download_limit, 'download_count' => $user_download_count];
+			}
+		} else {
+			$sql = "SELECT p.post_title, e.*
                 FROM {$wpdb->prefix}posts p, {$wpdb->prefix}ahm_emails e
                 WHERE e.pid = p.ID {$time_range} {$package_query}
                 ORDER BY `id` DESC
                 LIMIT $start, $items_per_page";
-        $res = $wpdb->get_results( $sql, ARRAY_A );
+			$res = $wpdb->get_results( $sql, ARRAY_A );
+		}
+
 
         $subscribers       = array();
         foreach( $res as $subscriber ){
+	        $subscriber = (array)$subscriber;
             if( isset( $subscriber['custom_data'] ) ) $subscriber['custom_data'] = maybe_unserialize( $subscriber['custom_data'] );
             if( isset( $subscriber['date'] ) ) $subscriber['date'] = date( "F j, Y", $subscriber['date'] );
             $subscribers[] = $this->prepare_response_for_collection( $subscriber );
         }
-        return rest_ensure_response( $subscribers );
+         return rest_ensure_response( $subscribers );
     }
 
     public function get_item_permissions_check( $request ) {
