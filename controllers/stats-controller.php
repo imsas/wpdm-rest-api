@@ -92,7 +92,7 @@ class WPDM_REST_Stats_Controller {
 
     public function get_items_permissions_check( $request ) {
 
-        if ( ! current_user_can( 'manage_options' ) ) {
+        if ( ! current_user_can( 'read' ) ) {
             return new WP_Error( 'rest_forbidden', esc_html__( 'You cannot view stats.' ), array( 'status' => $this->authorization_status_code() ) );
         }
         return true;
@@ -110,6 +110,8 @@ class WPDM_REST_Stats_Controller {
         $time_range     = '';
         $time_range     .= $start_date != '' ? "and s.timestamp >={$start_date}" : '';
         $time_range     .= $end_date != '' ? " and s.timestamp <={$end_date}" : '';
+
+		if(!current_user_can("manage_options")) $request['user_id'] = get_current_user_id();
 
         $package_query  = isset( $request['package_id'] ) ? "and s.pid = ".(int) $request['package_id'] : '';
         $user_query     = isset( $request['user_id'] ) ? "and s.uid = ".(int) $request['user_id'] : '';

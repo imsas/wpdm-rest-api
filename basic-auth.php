@@ -5,7 +5,7 @@ if (!defined('WPINC')) {
 
 function wpdm_rest_api_basic_auth_handler( $user ) {
     global $wpdm_rest_basic_auth_error;
-
+	//wpdmdd($user);
 	$wpdm_rest_basic_auth_error = null;
 
     // Don't authenticate twice
