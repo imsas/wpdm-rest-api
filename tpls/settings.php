@@ -28,7 +28,7 @@ if($api_key == ''){
         <fieldset>
             <div class="media">
                 <div class="pull-right">
-                    <img id="qrcode" src="https://chart.googleapis.com/chart?cht=qr&chs=256x256&chl=wpdmapi|<?php echo home_url('/'); ?>|<?php echo $api_key; ?>" />
+                    <img style="width: 180px" id="qrcode" src="https://api.qrserver.com/v1/create-qr-code/?size=512x512&data=<?php echo home_url(''); ?>|<?=$api_key?>" />
                 </div>
                 <div class="media-body" style="padding-left: 30px">
                     <br/><br/>
@@ -75,7 +75,7 @@ if($api_key == ''){
                     if (response.type === "success") {
                         if (response.key) {
                             $('#wpdm_api_key').val(response.key);
-                            $('#qrcode').attr('src', 'https://chart.googleapis.com/chart?cht=qr&chs=256x256&chl=wpdmapi|<?php echo home_url(''); ?>|'+response.key);
+                            $('#qrcode').attr('src', 'https://api.qrserver.com/v1/create-qr-code/?size=512x512&data={url:<?php echo home_url(''); ?>,apikey:'+response.key+'}');
                             WPDM.unblockUI('#fm_settings');
                             WPDM.notify("<i class='fa fa-check-double'></i> API key regenerated successfully!", "success", "top-right", 70000);
                         }

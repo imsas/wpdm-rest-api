@@ -4,7 +4,7 @@ Plugin Name:  WPDM - REST API
 Plugin URI: https://www.wpdownloadmanager.com/download/wpdm-api/
 Description: WordPress Download Manager REST API
 Author: Shahriar
-Version: 1.3.4
+Version: 1.3.5
 Author URI: https://wpdownloadmanager.com/
 Update URI: wpdm-rest-api
 */
